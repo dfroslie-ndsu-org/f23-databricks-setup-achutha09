@@ -1,0 +1,1 @@
+Place screenshots of the requested assignment information here.
