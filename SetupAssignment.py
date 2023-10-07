@@ -5,41 +5,38 @@
 
 # COMMAND ----------
 
-# The first step is to connect to your storage account after setting up a Databricks secret scope and a key vault.  Follow the PDF walkthrough to get this set up.
-# You can use the storage account from the first assignment (GitHub and Azure) for this assignment.
+# Connecting to the storage account using the secret scope and keyVault
 
-# You'll need to replace these values with the specifics for your setup.
-
-storage_end_point = "assign1storage.dfs.core.windows.net" 
-my_scope = "MarchMadnessScope"
-my_key = "assign1-key"
+storage_end_point = "achuthastorage.dfs.core.windows.net"
+my_scope = "databricksSecretScope"
+my_key = "storage-keyvault"
 
 spark.conf.set(
     "fs.azure.account.key." + storage_end_point,
     dbutils.secrets.get(scope=my_scope, key=my_key))
 
-# Replace the container name (assign-1-blob) and storage account name (assign1storage) in the uri.
-uri = "abfss://assign-1-blob@assign1storage.dfs.core.windows.net/"
+uri = "abfss://assign1@achuthastorage.dfs.core.windows.net/"
 
 
 # COMMAND ----------
 
-# Read the data file from the storage account.  This the same datafile used in assignment 1.  It is also available in the InputData folder of this assignment's repo.
+# Reading the data file from the storage account.  
 sp_df = spark.read.csv(uri+'SandP500Daily.csv', header=True)
  
 display(sp_df)
 
 # COMMAND ----------
 
-# Create new column with the range for the day.
+# Creating the new column with the range for the day.
 sp_range_df = sp_df.withColumn('Range', sp_df.High - sp_df.Low)
 
 display(sp_range_df)
 
 # COMMAND ----------
 
-# Save this range file to a single CSV.  Use coalesce to output it to a single file.
+# Saving this range file to a single CSV. Using coalesce to output it to a single file.
 sp_range_df.coalesce(1).write.option('header',True).mode('overwrite').csv(uri+"output/Range")
+
 
 
 # COMMAND ----------
@@ -51,13 +48,21 @@ sp_range_df.coalesce(1).write.option('header',True).mode('overwrite').csv(uri+"o
 
 # COMMAND ----------
 
-# Use the range from the previous cells to find the percent change for each day.  Use the Open column for the denominator.
-# Sort the dataset descending based on the percent change (High to Low).
+# Using the range from the previous cells to find the percent change for each day.
+sp_range_df_percent_change = sp_range_df.withColumn('Percent Change', (sp_range_df.Range/sp_range_df.Open) * 100)
+
+# Sorting the dataset descending based on the percent change (High to Low).
+sp_range_df_sorted = sp_range_df_percent_change.orderBy("Percent Change", ascending=False)
+
+display(sp_range_df_sorted)
+
+
+
 
 
 
 # COMMAND ----------
 
-# Save the file to a single CSV file to your storage account to a single CSV file in the location output/PercentChange.
-
+# Saving the file to a single CSV file to storage account in the location output/PercentChange.
+sp_range_df_sorted.coalesce(1).write.option('header',True).mode('overwrite').csv(uri+"output/PercentChange")
 
