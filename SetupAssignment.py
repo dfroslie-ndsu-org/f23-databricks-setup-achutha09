@@ -17,36 +17,18 @@ spark.conf.set(
 
 uri = "abfss://assign1@achuthastorage.dfs.core.windows.net/"
 
-
-# COMMAND ----------
-
 # Reading the data file from the storage account.  
 sp_df = spark.read.csv(uri+'SandP500Daily.csv', header=True)
  
 display(sp_df)
-
-# COMMAND ----------
 
 # Creating the new column with the range for the day.
 sp_range_df = sp_df.withColumn('Range', sp_df.High - sp_df.Low)
 
 display(sp_range_df)
 
-# COMMAND ----------
-
 # Saving this range file to a single CSV. Using coalesce to output it to a single file.
 sp_range_df.coalesce(1).write.option('header',True).mode('overwrite').csv(uri+"output/Range")
-
-
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ### Your coding part starts here.  
-# MAGIC Fill in the PySpark in the following notebook cells.
-# MAGIC
-
-# COMMAND ----------
 
 # Using the range from the previous cells to find the percent change for each day.
 sp_range_df_percent_change = sp_range_df.withColumn('Percent Change', (sp_range_df.Range/sp_range_df.Open) * 100)
@@ -55,13 +37,6 @@ sp_range_df_percent_change = sp_range_df.withColumn('Percent Change', (sp_range_
 sp_range_df_sorted = sp_range_df_percent_change.orderBy("Percent Change", ascending=False)
 
 display(sp_range_df_sorted)
-
-
-
-
-
-
-# COMMAND ----------
 
 # Saving the file to a single CSV file to storage account in the location output/PercentChange.
 sp_range_df_sorted.coalesce(1).write.option('header',True).mode('overwrite').csv(uri+"output/PercentChange")
